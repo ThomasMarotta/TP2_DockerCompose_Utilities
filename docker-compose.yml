@@ -1,0 +1,49 @@
+services:
+  backend:
+#    build:
+#      dockerfile: java.dockerfile
+    image: my-super-app
+    networks:
+      - front_back_network
+      - back_database_network
+    environment:
+      DB_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password  
+
+  frontend:
+    depends_on:
+      - backend
+    build: 
+      dockerfile: front/nginx.dockerfile
+    networks:
+      - front_back_network 
+    ports:
+      - "1969:80"
+
+  database:
+    build: 
+      dockerfile: db/psql.dockerfile  
+    volumes:
+      - pg_data:/var/lib/postgresql/data 
+    networks:
+      - back_database_network  
+    environment:
+      POSTGRES_DB: Hello  
+      POSTGRES_USER: myuser  
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password  
+    secrets:
+      - db_password  
+
+networks:
+  front_back_network:
+    driver: bridge
+  back_database_network:
+    driver: bridge
+
+secrets:
+  db_password : 
+    file : passwd.txt
+
+volumes:
+  pg_data:
